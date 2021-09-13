@@ -4,6 +4,7 @@ import { setDefaults } from "../../../src/node/cli"
 import { getAvailablePort } from "../../utils/helpers"
 
 describe.only("createApp", () => {
+  // TODO@jsjoeio refactor to use beforeEach and afterEach
   it("should return an Express app, a WebSockets Express app and an http server", async () => {
     const port = await getAvailablePort()
     const defaultArgs = await setDefaults({
@@ -17,6 +18,30 @@ describe.only("createApp", () => {
     expect(app).not.toBeNull()
     expect(wsApp).not.toBeNull()
     expect(server).toBeInstanceOf(http.Server)
+
+    // Cleanup
+    server.close()
+  })
+
+  it("should handle error events on the server", async () => {
+    const port = await getAvailablePort()
+    const defaultArgs = await setDefaults({
+      _: [],
+    })
+
+    // This looks funky, but that's because createApp
+    // returns an array like [app, wsApp, server]
+    // We only need server which is at index 2
+    // we do it this way so ESLint is happy that we're
+    // have no declared variables not being used
+    const app = await createApp(defaultArgs)
+    const server = app[2]
+
+    server.listen(port)
+
+    // TODO@jsjoeio figure out how to emit the error event
+    // see if it gets rejected like it should
+    // otherwise see if our logger logged it
 
     // Cleanup
     server.close()

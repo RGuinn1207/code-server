@@ -33,6 +33,7 @@ export const createApp = async (args: DefaultedArgs): Promise<[Express, Express,
       resolve2()
     }
     server.on("error", (err) => {
+      console.log("there was an error")
       if (!resolved) {
         reject(err)
       } else {

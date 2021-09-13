@@ -1,9 +1,24 @@
+import { logger } from "@coder/logger"
 import * as http from "http"
 import { createApp, ensureAddress } from "../../../src/node/app"
 import { setDefaults } from "../../../src/node/cli"
 import { getAvailablePort } from "../../utils/helpers"
 
-describe.only("createApp", () => {
+describe("createApp", () => {
+  let spy: jest.SpyInstance
+
+  beforeEach(() => {
+    spy = jest.spyOn(logger, "error")
+  })
+
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
+
+  afterAll(() => {
+    jest.restoreAllMocks()
+  })
+
   // TODO@jsjoeio refactor to use beforeEach and afterEach
   it("should return an Express app, a WebSockets Express app and an http server", async () => {
     const port = await getAvailablePort()
@@ -26,6 +41,7 @@ describe.only("createApp", () => {
   it("should handle error events on the server", async () => {
     const port = await getAvailablePort()
     const defaultArgs = await setDefaults({
+      port,
       _: [],
     })
 
@@ -37,11 +53,12 @@ describe.only("createApp", () => {
     const app = await createApp(defaultArgs)
     const server = app[2]
 
-    server.listen(port)
-
-    // TODO@jsjoeio figure out how to emit the error event
-    // see if it gets rejected like it should
-    // otherwise see if our logger logged it
+    const testError = new Error("Test error")
+    // Emitting error events on servers
+    // https://stackoverflow.com/a/33872506/3015595
+    server.emit("error", testError)
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy).toHaveBeenCalledWith(`http server error: ${testError.message} ${testError.stack}`)
 
     // Cleanup
     server.close()

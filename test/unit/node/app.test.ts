@@ -1,6 +1,27 @@
 import * as http from "http"
-import { ensureAddress } from "../../../src/node/app"
+import { createApp, ensureAddress } from "../../../src/node/app"
+import { setDefaults } from "../../../src/node/cli"
 import { getAvailablePort } from "../../utils/helpers"
+
+describe.only("createApp", () => {
+  it("should return an Express app, a WebSockets Express app and an http server", async () => {
+    const port = await getAvailablePort()
+    const defaultArgs = await setDefaults({
+      port,
+      _: [],
+    })
+    const [app, wsApp, server] = await createApp(defaultArgs)
+
+    // This doesn't check much, but it's a good sanity check
+    // to ensure we actually get back values from createApp
+    expect(app).not.toBeNull()
+    expect(wsApp).not.toBeNull()
+    expect(server).toBeInstanceOf(http.Server)
+
+    // Cleanup
+    server.close()
+  })
+})
 
 describe("ensureAddress", () => {
   let mockServer: http.Server
